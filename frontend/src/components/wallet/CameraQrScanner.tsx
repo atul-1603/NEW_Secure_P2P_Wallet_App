@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import jsQR from 'jsqr'
 import { Camera, CameraOff, QrCode, ScanLine } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert } from '../ui/alert'
@@ -35,10 +36,7 @@ export function CameraQrScanner({ onScan }: CameraQrScannerProps) {
       return false
     }
 
-    const supportsCamera = typeof navigator.mediaDevices?.getUserMedia === 'function'
-    const supportsDetector = 'BarcodeDetector' in window
-
-    return supportsCamera && supportsDetector
+    return typeof navigator.mediaDevices?.getUserMedia === 'function'
   }, [])
 
   useEffect(() => {
@@ -100,12 +98,10 @@ export function CameraQrScanner({ onScan }: CameraQrScannerProps) {
       await videoRef.current.play()
 
       const detectorConstructor = (window as Window & { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector
+      detectorRef.current = detectorConstructor
+        ? new detectorConstructor({ formats: ['qr_code'] })
+        : null
 
-      if (!detectorConstructor) {
-        throw new Error('QR detector is unavailable on this device.')
-      }
-
-      detectorRef.current = new detectorConstructor({ formats: ['qr_code'] })
       setScanning(true)
       scanLoop()
     } catch (error) {
@@ -117,9 +113,8 @@ export function CameraQrScanner({ onScan }: CameraQrScannerProps) {
   function scanLoop() {
     const video = videoRef.current
     const canvas = canvasRef.current
-    const detector = detectorRef.current
 
-    if (!video || !canvas || !detector || video.readyState < 2) {
+    if (!video || !canvas || video.readyState < 2) {
       rafRef.current = requestAnimationFrame(scanLoop)
       return
     }
@@ -135,21 +130,36 @@ export function CameraQrScanner({ onScan }: CameraQrScannerProps) {
     canvas.height = video.videoHeight
     context.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-    void detector.detect(canvas).then((results) => {
-      const decodedValue = results.find((item) => typeof item.rawValue === 'string' && item.rawValue.trim().length > 0)?.rawValue
-
-      if (decodedValue) {
-        const normalizedValue = decodedValue.trim()
-        setLastScannedValue(normalizedValue)
-        onScan(normalizedValue)
-        stopScanner()
+    void decodeFrame(canvas, context).then((decodedValue) => {
+      if (!decodedValue) {
+        rafRef.current = requestAnimationFrame(scanLoop)
         return
       }
 
-      rafRef.current = requestAnimationFrame(scanLoop)
+      setLastScannedValue(decodedValue)
+      onScan(decodedValue)
+      stopScanner()
     }).catch(() => {
       rafRef.current = requestAnimationFrame(scanLoop)
     })
+  }
+
+  async function decodeFrame(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): Promise<string | null> {
+    const detector = detectorRef.current
+
+    if (detector) {
+      const results = await detector.detect(canvas)
+      const decodedValue = results.find((item) => typeof item.rawValue === 'string' && item.rawValue.trim().length > 0)?.rawValue
+
+      return decodedValue?.trim() ?? null
+    }
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+    const decodedQr = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'attemptBoth',
+    })
+
+    return decodedQr?.data?.trim() ?? null
   }
 
   return (

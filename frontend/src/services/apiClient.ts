@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { tokenStore } from './tokenStore'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8084'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export const apiClient = axios.create({
   baseURL,

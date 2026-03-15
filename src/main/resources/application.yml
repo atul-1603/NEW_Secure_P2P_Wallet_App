@@ -2,9 +2,9 @@ spring:
   application:
     name: p2p-wallet
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wallet_db}
-    username: ${DB_USER:wallet_user}
-    password: ${DB_PASS:wallet_pass}
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wallet_db}}
+    username: ${DATABASE_USERNAME:${DB_USER:wallet_user}}
+    password: ${DATABASE_PASSWORD:${DB_PASS:wallet_pass}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 15

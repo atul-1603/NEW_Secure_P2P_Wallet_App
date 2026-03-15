@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  DATABASE_URL: jdbc:postgresql://postgres:5432/wallet_db
+  JWT_ACCESS_TOKEN_EXPIRATION_MS: "900000"
+  JWT_REFRESH_TOKEN_EXPIRATION_MS: "604800000"
