@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: p2p-wallet
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wallet_db}}
+    username: ${DATABASE_USERNAME:${DB_USER:wallet_user}}
+    password: ${DATABASE_PASSWORD:${DB_PASS:wallet_pass}}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 3
+      connection-timeout: 30000
+      pool-name: WalletDBPool
+  jpa:
+    open-in-view: false # Production-safe setting, disables open session in view
+    hibernate:
+      ddl-auto: none # Disable automatic schema generation; use Flyway migrations only
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 50
+        order_updates: true
+        order_inserts: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-this-in-production-jwt-secret-key-minimum-32-bytes}
+    access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:900000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION_MS:604800000}
