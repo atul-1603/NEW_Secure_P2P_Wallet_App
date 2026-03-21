@@ -7,6 +7,7 @@ import WalletPage from './pages/Wallet'
 import SendMoneyPage from './pages/SendMoney'
 import AddMoneyPage from './pages/AddMoney'
 import ReceiveMoneyPage from './pages/ReceiveMoney'
+import WithdrawPage from './pages/Withdraw'
 import TransactionsPage from './pages/Transactions'
 import AnalyticsPage from './pages/Analytics'
 import SecurityPage from './pages/Security'
@@ -43,6 +44,7 @@ function App() {
           <Route path="/add-money" element={<AddMoneyPage />} />
           <Route path="/receive" element={<ReceiveMoneyPage />} />
           <Route path="/receive-money" element={<ReceiveMoneyPage />} />
+          <Route path="/withdraw" element={<WithdrawPage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/contacts" element={<ContactsPage />} />

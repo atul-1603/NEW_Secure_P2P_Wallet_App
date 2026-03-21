@@ -236,6 +236,41 @@ export interface TransactionHistoryItem {
   completedAt?: string
 }
 
+export interface CreateBankAccountRequest {
+  accountHolderName: string
+  accountNumber: string
+  ifscCode: string
+  bankName: string
+}
+
+export interface BankAccountResponse {
+  id: string
+  accountHolderName: string
+  maskedAccountNumber: string
+  ifscCode: string
+  bankName: string
+  verified: boolean
+  createdAt: string
+}
+
+export interface CreateWithdrawalRequest {
+  bankAccountId: string
+  amount: number
+}
+
+export interface WithdrawalHistoryItem {
+  id: string
+  amount: number
+  status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | string
+  bankAccountId: string
+  bankName: string
+  accountHolderName: string
+  maskedAccountNumber: string
+  referenceId: string
+  createdAt: string
+  processedAt?: string
+}
+
 export interface ApiErrorResponse {
   message?: string
   error?: string
