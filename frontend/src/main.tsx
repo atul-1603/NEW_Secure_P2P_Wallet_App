@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext'
 import { ToastProvider } from './components/ui/toast'
+import { NotificationsProvider } from './theme/NotificationsProvider'
 import { ThemeProvider } from './theme/ThemeProvider'
 
 const queryClient = new QueryClient()
@@ -15,7 +16,9 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>
-            <App />
+            <NotificationsProvider>
+              <App />
+            </NotificationsProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

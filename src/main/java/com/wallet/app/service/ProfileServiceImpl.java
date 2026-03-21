@@ -22,6 +22,7 @@ import com.wallet.app.dto.SecuritySettingsResponse;
 import com.wallet.app.dto.UpdateProfileRequest;
 import com.wallet.app.dto.UpdateSecuritySettingsRequest;
 import com.wallet.app.dto.UserProfileResponse;
+import com.wallet.app.entity.NotificationType;
 import com.wallet.app.entity.User;
 import com.wallet.app.repository.UserRepository;
 
@@ -38,15 +39,18 @@ public class ProfileServiceImpl implements ProfileService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     public ProfileServiceImpl(
         UserRepository userRepository,
         PasswordEncoder passwordEncoder,
-        FileStorageService fileStorageService
+        FileStorageService fileStorageService,
+        NotificationService notificationService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -126,6 +130,13 @@ public class ProfileServiceImpl implements ProfileService {
         user.setTwoFactorEnabled(request.twoFactorEnabled());
 
         userRepository.save(Objects.requireNonNull(user));
+
+        notificationService.createAndPublish(
+            user.getId(),
+            NotificationType.SECURITY,
+            "Security updated",
+            "Two-factor authentication is now " + (user.isTwoFactorEnabled() ? "enabled" : "disabled")
+        );
 
         return new SecuritySettingsResponse(
             user.isTwoFactorEnabled(),

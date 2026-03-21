@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    define: {
+      global: 'globalThis',
+    },
     server: {
       proxy: {
         '/api': {

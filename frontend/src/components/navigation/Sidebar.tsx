@@ -1,5 +1,6 @@
 import {
   ArrowRightLeft,
+  BellRing,
   ChartNoAxesCombined,
   CreditCard,
   Download,
@@ -27,6 +28,7 @@ const navItems = [
   { icon: CreditCard, label: 'Transactions', to: '/transactions' },
   { icon: ChartNoAxesCombined, label: 'Analytics', to: '/analytics' },
   { icon: User, label: 'Profile', to: '/profile' },
+  { icon: BellRing, label: 'Notifications', to: '/notifications' },
   { icon: Shield, label: 'Security', to: '/security' },
   { icon: Settings, label: 'Settings', to: '/settings' },
 ]

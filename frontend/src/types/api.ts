@@ -140,6 +140,19 @@ export interface UpdateProfileRequest {
   transferAlerts?: boolean
 }
 
+export interface UserPreferencesResponse {
+  emailNotifications: boolean
+  transactionNotifications: boolean
+  securityAlerts: boolean
+  updatedAt: string
+}
+
+export interface UpdateUserPreferencesRequest {
+  emailNotifications: boolean
+  transactionNotifications: boolean
+  securityAlerts: boolean
+}
+
 export interface ChangePasswordRequest {
   currentPassword: string
   newPassword: string
@@ -275,4 +288,24 @@ export interface ApiErrorResponse {
   message?: string
   error?: string
   status?: number
+}
+
+export interface NotificationResponse {
+  id: string
+  type: 'CREDIT' | 'DEBIT' | 'LOGIN' | 'SECURITY' | 'WITHDRAWAL' | 'SYSTEM' | string
+  title: string
+  message: string
+  isRead: boolean
+  createdAt: string
+}
+
+export interface NotificationsResponse {
+  unreadCount: number
+  notifications: NotificationResponse[]
+}
+
+export interface NotificationSocketEvent {
+  action: 'UPSERT' | 'DELETE' | 'ALL_READ' | string
+  notification: NotificationResponse | null
+  notificationId: string | null
 }

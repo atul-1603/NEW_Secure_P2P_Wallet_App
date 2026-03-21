@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.wallet.app.dto.TransactionHistoryItem;
 import com.wallet.app.dto.TransferRequest;
 import com.wallet.app.dto.TransferResponse;
+import com.wallet.app.entity.NotificationType;
 import com.wallet.app.entity.Transaction;
 import com.wallet.app.entity.User;
 import com.wallet.app.entity.Wallet;
@@ -29,15 +30,18 @@ public class TransferServiceImpl implements TransferService {
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
     public TransferServiceImpl(
         WalletRepository walletRepository,
         UserRepository userRepository,
-        TransactionRepository transactionRepository
+        TransactionRepository transactionRepository,
+        NotificationService notificationService
     ) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -104,6 +108,24 @@ public class TransferServiceImpl implements TransferService {
             transaction.setCompletedAt(OffsetDateTime.now());
 
             Transaction savedTransaction = transactionRepository.save(transaction);
+
+            User receiverUser = userRepository.findById(lockedReceiver.getUserId())
+                .orElse(null);
+            String receiverName = receiverUser == null ? "recipient" : receiverUser.getFullName();
+
+            notificationService.createAndPublish(
+                sender.getId(),
+                NotificationType.DEBIT,
+                "Money sent",
+                "You sent INR " + amount + " to " + receiverName
+            );
+
+            notificationService.createAndPublish(
+                lockedReceiver.getUserId(),
+                NotificationType.CREDIT,
+                "Money received",
+                "You received INR " + amount + " from " + sender.getFullName()
+            );
 
             return new TransferResponse(
                 savedTransaction.getId(),

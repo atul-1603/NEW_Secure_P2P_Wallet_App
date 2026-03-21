@@ -60,6 +60,9 @@ class WithdrawalServiceImplTest {
     @Mock
     private WithdrawalProcessingService withdrawalProcessingService;
 
+    @Mock
+    private NotificationService notificationService;
+
     private WithdrawalServiceImpl withdrawalService;
 
     @BeforeEach
@@ -71,7 +74,8 @@ class WithdrawalServiceImplTest {
             withdrawalRequestRepository,
             transactionRepository,
             encryptionService,
-            withdrawalProcessingService
+            withdrawalProcessingService,
+            notificationService
         );
     }
 

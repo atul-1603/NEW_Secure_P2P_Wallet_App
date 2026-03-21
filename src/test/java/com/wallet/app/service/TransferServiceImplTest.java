@@ -43,11 +43,14 @@ class TransferServiceImplTest {
     @Mock
     private TransactionRepository transactionRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private TransferServiceImpl transferService;
 
     @BeforeEach
     void setUp() {
-        transferService = new TransferServiceImpl(walletRepository, userRepository, transactionRepository);
+        transferService = new TransferServiceImpl(walletRepository, userRepository, transactionRepository, notificationService);
     }
 
     @Test

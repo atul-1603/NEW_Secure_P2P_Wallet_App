@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.wallet.app.dto.CreateWithdrawalRequest;
 import com.wallet.app.dto.WithdrawalHistoryItem;
 import com.wallet.app.entity.BankAccount;
+import com.wallet.app.entity.NotificationType;
 import com.wallet.app.entity.Transaction;
 import com.wallet.app.entity.User;
 import com.wallet.app.entity.Wallet;
@@ -37,6 +38,7 @@ public class WithdrawalServiceImpl implements WithdrawalService {
     private final TransactionRepository transactionRepository;
     private final SensitiveDataEncryptionService encryptionService;
     private final WithdrawalProcessingService withdrawalProcessingService;
+    private final NotificationService notificationService;
 
     public WithdrawalServiceImpl(
         UserRepository userRepository,
@@ -45,7 +47,8 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         WithdrawalRequestRepository withdrawalRequestRepository,
         TransactionRepository transactionRepository,
         SensitiveDataEncryptionService encryptionService,
-        WithdrawalProcessingService withdrawalProcessingService
+        WithdrawalProcessingService withdrawalProcessingService,
+        NotificationService notificationService
     ) {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
@@ -54,6 +57,7 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         this.transactionRepository = transactionRepository;
         this.encryptionService = encryptionService;
         this.withdrawalProcessingService = withdrawalProcessingService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -109,6 +113,13 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         transaction.setReference(saved.getReferenceId().toString());
         transaction.setNote("Withdrawal to " + bankAccount.getBankName());
         transactionRepository.save(transaction);
+
+        notificationService.createAndPublish(
+            user.getId(),
+            NotificationType.WITHDRAWAL,
+            "Withdrawal requested",
+            "INR " + amount + " withdrawal submitted to " + bankAccount.getBankName() + " and is pending"
+        );
 
         scheduleProcessingAfterCommit(saved.getId());
 

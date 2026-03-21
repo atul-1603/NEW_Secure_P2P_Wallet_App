@@ -12,6 +12,7 @@ import TransactionsPage from './pages/Transactions'
 import AnalyticsPage from './pages/Analytics'
 import SecurityPage from './pages/Security'
 import SettingsPage from './pages/Settings'
+import NotificationsPage from './pages/Notifications'
 import ProfilePage from './pages/Profile'
 import ContactsPage from './pages/Contacts'
 import LoginPage from './pages/Login'
@@ -51,6 +52,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/security" element={<SecurityPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

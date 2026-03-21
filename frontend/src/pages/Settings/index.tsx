@@ -1,33 +1,107 @@
 import { motion } from 'framer-motion'
 import { BellRing, Palette, Save, SlidersHorizontal } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert } from '../../components/ui/alert'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
+import { useToast } from '../../components/ui/toast'
+import { useProfileQuery, useUpdateProfileMutation } from '../../hooks/useProfileData'
+import { preferencesService } from '../../services/preferences.service'
+import { getApiErrorMessage } from '../../utils/error'
 
 type PreferenceState = {
   displayName: string
-  emailAlerts: boolean
-  transferAlerts: boolean
+  emailNotifications: boolean
+  transactionNotifications: boolean
+  securityAlerts: boolean
 }
 
 export default function SettingsPage() {
+  const { showError, showSuccess } = useToast()
+  const profileQuery = useProfileQuery()
+  const updateProfileMutation = useUpdateProfileMutation()
+
   const [preferences, setPreferences] = useState<PreferenceState>({
     displayName: 'Wallet User',
-    emailAlerts: true,
-    transferAlerts: true,
+    emailNotifications: true,
+    transactionNotifications: true,
+    securityAlerts: true,
   })
 
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadData() {
+      if (!profileQuery.data) {
+        return
+      }
+
+      setLoading(true)
+      try {
+        const settings = await preferencesService.getPreferences()
+        if (!mounted) {
+          return
+        }
+
+        setPreferences({
+          displayName: profileQuery.data.fullName || 'Wallet User',
+          emailNotifications: settings.emailNotifications,
+          transactionNotifications: settings.transactionNotifications,
+          securityAlerts: settings.securityAlerts,
+        })
+      } catch (error) {
+        showError(getApiErrorMessage(error, 'Unable to load settings'))
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadData()
+    return () => {
+      mounted = false
+    }
+  }, [profileQuery.data, showError])
 
   async function savePreferences() {
     setSaving(true)
     setSavedMessage(null)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setSaving(false)
-    setSavedMessage('Preferences saved successfully.')
+
+    try {
+      await Promise.all([
+        updateProfileMutation.mutateAsync({
+          fullName: preferences.displayName,
+        }),
+        preferencesService.updatePreferences({
+          emailNotifications: preferences.emailNotifications,
+          transactionNotifications: preferences.transactionNotifications,
+          securityAlerts: preferences.securityAlerts,
+        }),
+      ])
+
+      setSavedMessage('Preferences saved successfully.')
+      showSuccess('Settings updated')
+    } catch (error) {
+      showError(getApiErrorMessage(error, 'Failed to save preferences'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading || profileQuery.isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-8 w-40 animate-pulse rounded bg-muted/60" />
+        <div className="h-28 animate-pulse rounded-xl bg-muted/60" />
+        <div className="h-28 animate-pulse rounded-xl bg-muted/60" />
+      </div>
+    )
   }
 
   return (
@@ -81,11 +155,11 @@ export default function SettingsPage() {
               <span>Email alerts</span>
               <input
                 type="checkbox"
-                checked={preferences.emailAlerts}
+                checked={preferences.emailNotifications}
                 onChange={(event) =>
                   setPreferences((value) => ({
                     ...value,
-                    emailAlerts: event.target.checked,
+                    emailNotifications: event.target.checked,
                   }))
                 }
               />
@@ -95,11 +169,25 @@ export default function SettingsPage() {
               <span>Transfer notifications</span>
               <input
                 type="checkbox"
-                checked={preferences.transferAlerts}
+                checked={preferences.transactionNotifications}
                 onChange={(event) =>
                   setPreferences((value) => ({
                     ...value,
-                    transferAlerts: event.target.checked,
+                    transactionNotifications: event.target.checked,
+                  }))
+                }
+              />
+            </label>
+
+            <label className="flex items-center justify-between rounded-xl border bg-background p-3 text-sm">
+              <span>Security alerts</span>
+              <input
+                type="checkbox"
+                checked={preferences.securityAlerts}
+                onChange={(event) =>
+                  setPreferences((value) => ({
+                    ...value,
+                    securityAlerts: event.target.checked,
                   }))
                 }
               />

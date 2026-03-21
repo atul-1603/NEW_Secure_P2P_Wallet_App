@@ -21,6 +21,7 @@ import com.wallet.app.dto.ResendEmailVerificationRequest;
 import com.wallet.app.dto.RegisterRequest;
 import com.wallet.app.dto.VerifyEmailRequest;
 import com.wallet.app.dto.VerifyOtpRequest;
+import com.wallet.app.entity.NotificationType;
 import com.wallet.app.entity.User;
 import com.wallet.app.repository.UserRepository;
 import com.wallet.app.security.JwtTokenProvider;
@@ -38,6 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final WalletService walletService;
     private final EmailService emailService;
+    private final NotificationService notificationService;
     private final boolean otpEnabled;
     private final SecureRandom secureRandom;
 
@@ -47,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
         JwtTokenProvider jwtTokenProvider,
         WalletService walletService,
         EmailService emailService,
+        NotificationService notificationService,
         @Value("${security.auth.otp-enabled:true}") boolean otpEnabled
     ) {
         this.userRepository = userRepository;
@@ -54,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
         this.walletService = walletService;
         this.emailService = emailService;
+        this.notificationService = notificationService;
         this.otpEnabled = otpEnabled;
         this.secureRandom = new SecureRandom();
     }
@@ -193,6 +197,13 @@ public class AuthServiceImpl implements AuthService {
             String accessToken = jwtTokenProvider.generateAccessToken(user);
             String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
+            notificationService.createAndPublish(
+                user.getId(),
+                NotificationType.LOGIN,
+                "Login detected",
+                "Your account was signed in successfully"
+            );
+
             return new LoginResponse(
                 "login successful",
                 user.getId(),
@@ -248,6 +259,13 @@ public class AuthServiceImpl implements AuthService {
         validateOtp(user, request.otpCode());
         clearOtp(user);
         userRepository.save(user);
+
+        notificationService.createAndPublish(
+            user.getId(),
+            NotificationType.LOGIN,
+            "Login verified",
+            "OTP verified and login completed successfully"
+        );
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);

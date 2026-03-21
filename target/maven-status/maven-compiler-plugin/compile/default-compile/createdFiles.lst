@@ -50,6 +50,7 @@ com/wallet/app/service/package-info.class
 com/wallet/app/dto/WalletResponse.class
 com/wallet/app/controller/FileController.class
 com/wallet/app/dto/CreatePaymentOrderRequest.class
+com/wallet/app/service/NotificationServiceImpl$1.class
 com/wallet/app/dto/UserSearchItemResponse.class
 com/wallet/app/service/FileStorageService$StoredFile.class
 com/wallet/app/service/EmailServiceImpl.class

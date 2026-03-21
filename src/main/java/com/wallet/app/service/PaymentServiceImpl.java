@@ -27,6 +27,7 @@ import com.wallet.app.dto.CreatePaymentOrderRequest;
 import com.wallet.app.dto.CreatePaymentOrderResponse;
 import com.wallet.app.dto.VerifyPaymentRequest;
 import com.wallet.app.dto.VerifyPaymentResponse;
+import com.wallet.app.entity.NotificationType;
 import com.wallet.app.entity.Payment;
 import com.wallet.app.entity.Transaction;
 import com.wallet.app.entity.User;
@@ -43,6 +44,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
     private final String razorpayKeyId;
     private final String razorpayKeySecret;
 
@@ -51,6 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
         UserRepository userRepository,
         WalletRepository walletRepository,
         TransactionRepository transactionRepository,
+        NotificationService notificationService,
         @Value("${payment.razorpay.key-id:}") String razorpayKeyId,
         @Value("${payment.razorpay.key-secret:}") String razorpayKeySecret
     ) {
@@ -58,6 +61,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
+        this.notificationService = notificationService;
         this.razorpayKeyId = razorpayKeyId;
         this.razorpayKeySecret = razorpayKeySecret;
     }
@@ -163,6 +167,13 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setPaymentId(paymentId);
         payment.setStatus("SUCCESS");
+
+        notificationService.createAndPublish(
+            user.getId(),
+            NotificationType.CREDIT,
+            "Wallet credited",
+            "INR " + payment.getAmount() + " added to wallet successfully"
+        );
 
         return new VerifyPaymentResponse("SUCCESS", "payment verified and wallet credited", lockedWallet.getBalance());
     }

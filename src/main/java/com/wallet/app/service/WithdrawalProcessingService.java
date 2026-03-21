@@ -12,6 +12,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.wallet.app.entity.Wallet;
 import com.wallet.app.entity.WithdrawalRequest;
+import com.wallet.app.entity.NotificationType;
 import com.wallet.app.repository.TransactionRepository;
 import com.wallet.app.repository.WalletRepository;
 import com.wallet.app.repository.WithdrawalRequestRepository;
@@ -23,17 +24,20 @@ public class WithdrawalProcessingService {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final TransactionTemplate transactionTemplate;
+    private final NotificationService notificationService;
 
     public WithdrawalProcessingService(
         WithdrawalRequestRepository withdrawalRequestRepository,
         WalletRepository walletRepository,
         TransactionRepository transactionRepository,
-        TransactionTemplate transactionTemplate
+        TransactionTemplate transactionTemplate,
+        NotificationService notificationService
     ) {
         this.withdrawalRequestRepository = withdrawalRequestRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.transactionTemplate = transactionTemplate;
+        this.notificationService = notificationService;
     }
 
     @Async("withdrawalProcessingExecutor")
@@ -90,6 +94,13 @@ public class WithdrawalProcessingService {
         request.setProcessedAt(OffsetDateTime.now());
         withdrawalRequestRepository.save(request);
         updateTransactionStatus(request.getReferenceId(), "SUCCESS", request.getProcessedAt());
+
+        notificationService.createAndPublish(
+            request.getUserId(),
+            NotificationType.WITHDRAWAL,
+            "Withdrawal completed",
+            "INR " + request.getAmount() + " withdrawal has been processed successfully"
+        );
     }
 
     void markFailedAndRefund(UUID withdrawalId) {
@@ -117,6 +128,13 @@ public class WithdrawalProcessingService {
         request.setProcessedAt(OffsetDateTime.now());
         withdrawalRequestRepository.save(request);
         updateTransactionStatus(request.getReferenceId(), "FAILED", request.getProcessedAt());
+
+        notificationService.createAndPublish(
+            request.getUserId(),
+            NotificationType.WITHDRAWAL,
+            "Withdrawal failed",
+            "INR " + request.getAmount() + " withdrawal failed and amount has been refunded"
+        );
     }
 
     private void updateTransactionStatus(UUID referenceId, String status, OffsetDateTime completedAt) {
