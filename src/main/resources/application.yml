@@ -82,3 +82,16 @@ withdrawal:
     core-pool-size: ${WITHDRAWAL_PROCESSING_CORE_POOL_SIZE:2}
     max-pool-size: ${WITHDRAWAL_PROCESSING_MAX_POOL_SIZE:4}
     queue-capacity: ${WITHDRAWAL_PROCESSING_QUEUE_CAPACITY:100}
+
+ai:
+  provider: ${AI_PROVIDER:GEMINI}
+  rate-limit:
+    per-minute: ${AI_RATE_LIMIT_PER_MINUTE:30}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+    url: ${OPENAI_URL:https://api.openai.com/v1/chat/completions}
+  gemini:
+    api-key: ${GEMINI_API_KEY:AIzaSyA6HhTynosxd52JiB1OW8q-wBRrvptO34w}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
+    url: ${GEMINI_URL:https://generativelanguage.googleapis.com/v1beta/models}

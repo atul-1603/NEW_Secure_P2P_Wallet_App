@@ -51,6 +51,7 @@ export default function SendMoneyPage() {
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [scanMessage, setScanMessage] = useState<string | null>(null)
+  const [aiHintMessage, setAiHintMessage] = useState<string | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
 
   const { showError } = useToast()
@@ -77,6 +78,62 @@ export default function SendMoneyPage() {
       || contact.contactEmail.toLowerCase().includes(normalized),
     )
   }, [contactFilter, contacts])
+
+  useEffect(() => {
+    const aiReceiverEmail = searchParams.get('ai_receiverEmail')?.trim()
+    const aiReceiverName = searchParams.get('ai_receiverName')?.trim()
+    const aiAmount = searchParams.get('ai_amount')?.trim()
+    const aiNote = searchParams.get('ai_note')?.trim()
+    const aiReference = searchParams.get('ai_reference')?.trim()
+    const aiWalletId = searchParams.get('ai_toWalletId')?.trim()
+
+    let touched = false
+
+    if (aiReceiverEmail) {
+      setReceiverEmail(aiReceiverEmail)
+      touched = true
+    }
+
+    if (aiReceiverName) {
+      setReceiverName(aiReceiverName)
+      touched = true
+    }
+
+    if (aiAmount) {
+      const parsedAmount = Number(aiAmount)
+      if (Number.isFinite(parsedAmount) && parsedAmount > 0) {
+        setAmount(parsedAmount)
+        touched = true
+      }
+    }
+
+    if (aiNote) {
+      setNote(aiNote)
+      touched = true
+    }
+
+    if (aiReference) {
+      setReference(aiReference)
+      touched = true
+    }
+
+    if (aiWalletId) {
+      setAdvancedWalletId(aiWalletId)
+      touched = true
+    }
+
+    if (touched) {
+      setAiHintMessage('Assistant prefilled the transfer form. Please review and submit manually.')
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('ai_receiverEmail')
+      nextParams.delete('ai_receiverName')
+      nextParams.delete('ai_amount')
+      nextParams.delete('ai_note')
+      nextParams.delete('ai_reference')
+      nextParams.delete('ai_toWalletId')
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     const normalized = receiverEmail.trim()
@@ -203,6 +260,7 @@ export default function SendMoneyPage() {
       {successMessage ? <Alert className="border-emerald-200 bg-emerald-50 text-emerald-700">{successMessage}</Alert> : null}
       {error && wallet ? <Alert>{error}</Alert> : null}
       {scanMessage ? <Alert className="border-blue-200 bg-blue-50 text-blue-700">{scanMessage}</Alert> : null}
+      {aiHintMessage ? <Alert className="border-cyan-200 bg-cyan-50 text-cyan-700">{aiHintMessage}</Alert> : null}
 
       {!wallet ? (
         <Card>

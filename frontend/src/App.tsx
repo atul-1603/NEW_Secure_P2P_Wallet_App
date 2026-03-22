@@ -19,10 +19,12 @@ import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
 import VerifyOtpPage from './pages/VerifyOtp'
 import HomePage from './pages/Home'
+import { AiAssistant } from './components/assistant/AiAssistant'
 
 function App() {
   return (
     <BrowserRouter>
+      <AiAssistant />
       <Routes>
         <Route path="/" element={<HomePage />} />
 

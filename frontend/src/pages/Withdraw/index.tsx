@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Landmark, Loader2, Plus, RefreshCcw, SendHorizontal } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { Alert } from '../../components/ui/alert'
 import { Badge } from '../../components/ui/badge'
@@ -37,6 +38,8 @@ const withdrawSchema = z.object({
 type AddBankValues = z.infer<typeof addBankSchema>
 type WithdrawValues = z.infer<typeof withdrawSchema>
 
+const AI_ACTION_EVENT = 'wallet-ai-action'
+
 function getStatusClasses(status: string) {
   const normalized = status.toUpperCase()
 
@@ -67,6 +70,7 @@ export default function WithdrawPage() {
   const createWithdrawalMutation = useCreateWithdrawalMutation()
   const { showError, showSuccess } = useToast()
   const [addBankModalOpen, setAddBankModalOpen] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const wallet = walletQuery.data
   const bankAccounts = bankAccountsQuery.data ?? []
@@ -114,6 +118,38 @@ export default function WithdrawPage() {
   })
 
   const selectedAmount = watch('amount')
+
+  useEffect(() => {
+    const aiAmount = searchParams.get('ai_amount')?.trim()
+    const aiOpenModal = searchParams.get('ai_openModal')?.trim()
+
+    let touched = false
+
+    if (aiAmount) {
+      const parsedAmount = Number(aiAmount)
+      if (Number.isFinite(parsedAmount) && parsedAmount > 0) {
+        resetWithdraw((current) => ({
+          bankAccountId: current?.bankAccountId || '',
+          amount: parsedAmount,
+        }))
+        touched = true
+      }
+    }
+
+    if (aiOpenModal && aiOpenModal.toLowerCase() === 'add-bank') {
+      setAddBankModalOpen(true)
+      touched = true
+    }
+
+    if (touched) {
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('ai_amount')
+      nextParams.delete('ai_openModal')
+      setSearchParams(nextParams, { replace: true })
+      showSuccess('Assistant prepared withdrawal details. Please review before submitting.')
+    }
+  }, [resetWithdraw, searchParams, setSearchParams, showSuccess])
+
   const hasInsufficientBalance = !!wallet && Number.isFinite(selectedAmount) && selectedAmount > wallet.balance
   const cannotWithdraw =
     !wallet ||
@@ -122,6 +158,24 @@ export default function WithdrawPage() {
     createWithdrawalMutation.isPending ||
     isWithdrawSubmitting ||
     hasInsufficientBalance
+
+  useEffect(() => {
+    function onAiAction(event: Event) {
+      const customEvent = event as CustomEvent<{ type?: string; payload?: Record<string, string> }>
+      const detail = customEvent.detail
+      if (!detail || detail.type !== 'OPEN_MODAL') {
+        return
+      }
+
+      const modalTarget = detail.payload?.modal ?? ''
+      if (modalTarget === 'add-bank') {
+        setAddBankModalOpen(true)
+      }
+    }
+
+    window.addEventListener(AI_ACTION_EVENT, onAiAction)
+    return () => window.removeEventListener(AI_ACTION_EVENT, onAiAction)
+  }, [])
 
   async function onSubmitAddBank(values: AddBankValues) {
     try {

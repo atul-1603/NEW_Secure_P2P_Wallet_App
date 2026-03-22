@@ -2,9 +2,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, CircleDollarSign, Sparkles } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { Alert } from '../../components/ui/alert'
 import { Button } from '../../components/ui/button'
@@ -104,6 +104,7 @@ export default function AddMoneyPage() {
   const [confirmValues, setConfirmValues] = useState<AddMoneyValues | null>(null)
   const [successAmount, setSuccessAmount] = useState<number | null>(null)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const wallet = walletQuery.data ?? null
 
@@ -123,6 +124,34 @@ export default function AddMoneyPage() {
   })
 
   const amountValue = watch('amount')
+
+  useEffect(() => {
+    const aiAmount = searchParams.get('ai_amount')?.trim()
+    const aiNote = searchParams.get('ai_note')?.trim()
+
+    let touched = false
+
+    if (aiAmount) {
+      const parsed = Number(aiAmount)
+      if (Number.isFinite(parsed) && parsed > 0) {
+        setValue('amount', parsed, { shouldValidate: true })
+        touched = true
+      }
+    }
+
+    if (aiNote) {
+      setValue('note', aiNote, { shouldValidate: true })
+      touched = true
+    }
+
+    if (touched) {
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('ai_amount')
+      nextParams.delete('ai_note')
+      setSearchParams(nextParams, { replace: true })
+      showSuccess('Assistant prefilled Add Money details. Please confirm before payment.')
+    }
+  }, [searchParams, setSearchParams, setValue, showSuccess])
 
   const pageError = useMemo(() => {
     return [walletQuery.error]
